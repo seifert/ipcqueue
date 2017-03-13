@@ -53,7 +53,7 @@ class Queue(object):
     POSIX message queue.
     """
 
-    def __init__(self, name, maxsize=10, maxmsgsize=8192):
+    def __init__(self, name, maxsize=10, maxmsgsize=1024):
         """
         Constructor for message queue. *name* is an identifier of the
         queue, must starts with ``/``. *maxsize* is an integer that sets
