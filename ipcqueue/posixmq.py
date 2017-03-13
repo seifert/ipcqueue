@@ -71,12 +71,12 @@ class Queue(object):
 
     def __init__(self, name, maxsize=10, maxmsgsize=1024):
         """
-        Constructor for message queue. *name* is an identifier of the
+        Constructor for message queue. *name* is an unique identifier of the
         queue, must starts with ``/``. *maxsize* is an integer that sets
         the upperbound limit on the number of items that can be placed in
         the queue (maximum value depends on system limit). *maxmsgsize*
-        is a maximum size od the message in bytes (maximum value depends
-        on system limit).
+        is a maximum size of the message in bytes (maximum value depends
+        on hard system limit).
         """
         queue_name = ffi.new('char[]', name.encode('utf-8'))
         queue_id = ffi.new('int *')
@@ -107,12 +107,12 @@ class Queue(object):
     def put(self, item, block=True, timeout=None, priority=0,
             pickle_protocol=1):
         """
-        Put *item* into the queue. If *block* argument is true and *timeout*
-        is ``None`` (the default), block if necessary until a free slot is
+        Put *item* into the queue. If *block* is ``True`` and *timeout* is
+        ``None`` (the default), block if necessary until a free slot is
         available. If *timeout* is a positive number, it blocks at most
         *timeout* seconds and raises the :class:`queue.Full` exception if
         no free slot was available within that time. Otherwise (*block* is
-        false), put an *item* on the queue if a free slot is immediately
+        ``False``), put an *item* on the queue if a free slot is immediately
         available, else raise the :class:`queue.Full` exception (*timeout*
         is ignored in that case). *priority* is a priority of the message,
         the highest valued items are retrieved first. Items is serialized by
@@ -145,14 +145,13 @@ class Queue(object):
 
     def get(self, block=True, timeout=None):
         """
-        Remove and return an item from the queue. If *block* argument is
-        true and *timeout* is ``None`` (the default), block if necessary
-        until an item is available. If *timeout* is a positive number, it
-        blocks at most *timeout* seconds and raises the :class:`queue.Empty`
-        exception if no item was available within that time. Otherwise
-        (block is false), return an item if one is immediately available,
-        else raise the :class:`queue.Empty` exception (timeout is ignored
-        in that case).
+        Remove and return an item from the queue. If *block* is ``True`` and
+        *timeout* is ``None`` (the default), block if necessary until an item
+        is available. If *timeout* is a positive number, it blocks at most
+        *timeout* seconds and raises the :class:`queue.Empty` exception if no
+        item was available within that time. Otherwise (block is ``False``),
+        return an item if one is immediately available, else raise the
+        :class:`queue.Empty` exception (*timeout* is ignored in that case).
         """
         if not block:
             timeout = 0.0
@@ -181,7 +180,8 @@ class Queue(object):
 
     def qattr(self):
         """
-        Return attributes of the message queue as a :class:`dict`.
+        Return attributes of the message queue as a :class:`dict`:
+        ``{'size': 5, 'max_size': 10, 'max_msgbytes': 1024}``.
         """
         attr = ffi.new('struct mq_attr *')
         res = lib.posixmq_get_attr(self._queue_id, attr)
@@ -196,8 +196,8 @@ class Queue(object):
     def qsize(self):
         """
         Return the approximate size of the queue. Note, ``qsize() > 0``
-        doesn’t guarantee that a subsequent :meth:`get()` will not block,
-        nor will ``qsize() < maxsize`` guarantee that :meth:`put()` will
+        doesn’t guarantee that a subsequent :meth:`get` will not block,
+        nor will ``qsize() < maxsize`` guarantee that :meth:`put` will
         not block.
         """
         attr = self.qattr()

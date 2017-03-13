@@ -56,10 +56,10 @@ class Queue(object):
 
     def __init__(self, key=None, max_bytes=None):
         """
-        Constructor for message queue. *key* is an identifier of the
-        queue, must be positive number or ``0`` for private queue.
+        Constructor for message queue. *key* is an unique identifier of
+        the queue, must be positive number or ``0`` for private queue.
         *max_bytes* is a maximum number of bytes allowed in queue
-        (maximum is limited by system).
+        (maximum value depends on hard system limit).
         """
         queue_id = ffi.new('int *')
         res = lib.sysvmq_open(0 if key is None else key, queue_id)
@@ -86,7 +86,7 @@ class Queue(object):
 
     def put(self, item, block=True, msg_type=1, pickle_protocol=1):
         """
-        Put *item* into the queue. If *block* argument is true, block if
+        Put *item* into the queue. If *block* is ``True``, block if
         necessary until a free slot is available. Otherwise, put an *item*
         on the queue if a free slot is immediately available, else raise
         the :class:`queue.Full` exception. *msg_type* must be positive
@@ -125,7 +125,7 @@ class Queue(object):
     def get(self, block=True, msg_type=0):
         """
         Remove and return an item from the queue. If *block* argument is
-        true, block if necessary until an item is available. Otherwise,
+        ``True``, block if necessary until an item is available. Otherwise,
         return an item if one is immediately available, else raise the
         :class:`queue.Empty` exception. *msg_type* specifies the type of
         requested message. If it's ``0``, then the first message in the
@@ -166,7 +166,7 @@ class Queue(object):
 
     def qattr(self):
         """
-        Return attributes of the message queue as a **dict**
+        Return attributes of the message queue as a :class:`dict`:
         ``{'size': 3, 'max_bytes': 8192}``.
         """
         attr = ffi.new('SysVMqAttr *')
