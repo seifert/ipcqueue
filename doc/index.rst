@@ -11,6 +11,7 @@ Interprocess POSIX message queue implementation
     :members:
 
 .. autoclass:: ipcqueue.posixmq.Queue
+    :special-members: __init__
     :members:
 
 .. autofunction:: ipcqueue.posixmq.unlink
@@ -22,4 +23,5 @@ Interprocess SYS V message queue implementation
     :members:
 
 .. autoclass:: ipcqueue.sysvmq.Queue
+    :special-members: __init__
     :members:
