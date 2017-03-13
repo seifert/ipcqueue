@@ -1,0 +1,7 @@
+*.py[co]
+*.so
+*.o
+.cache
+__pycache__
+build
+doc/_build

@@ -1,0 +1,17 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_ALWAYS_EXCLUDE=.git:*.pyc:*.pyo:__pycache__:*.o
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+export PYBUILD_NAME=ipcqueue
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_clean:
+	dh_clean
+	rm -rf ${CURDIR}/ipcqueue/__pycache__
+	rm -f ${CURDIR}/ipcqueue/*.so
