@@ -13,16 +13,29 @@ __all__ = ['QueueError', 'Queue']
 class QueueError(Exception):
     """
     Indicates Queue error. Contains additional attributes *errno* and *msg*.
+    Value of the *errno* is system dependent, do don't use numeric codes
+    directly, use constants **QueueError.ERROR**, **QueueError.INVALID_VALUE**,
+    **QueueError.NO_PERMISSIONS**, **QueueError.NO_SYSTEM_RESOURCES**,
+    **QueueError.INVALID_DESCRIPTOR**, **QueueError.INTERRUPTED** and
+    **QueueError.TOO_BIG_MESSAGE**.
     """
 
+    ERROR = lib.SYSVMQ_E
+    INVALID_VALUE = lib.SYSVMQ_E_VALUE
+    NO_PERMISSIONS = lib.SYSVMQ_E_PERMISSIONS
+    NO_SYSTEM_RESOURCES = lib.SYSVMQ_E_RESOURCES
+    INVALID_DESCRIPTOR = lib.SYSVMQ_E_DESCRIPTOR
+    INTERRUPTED = lib.SYSVMQ_E_SIGNAL
+    TOO_BIG_MESSAGE = lib.SYSVMQ_E_SIZE
+
     _errno_to_str_map = {
-        lib.SYSVMQ_E: 'Error',
-        lib.SYSVMQ_E_VALUE: 'Invalid value',
-        lib.SYSVMQ_E_PERMISSIONS: 'No permissions',
-        lib.SYSVMQ_E_RESOURCES: 'No system resources',
-        lib.SYSVMQ_E_DESCRIPTOR: 'Invalid queue descriptor',
-        lib.SYSVMQ_E_SIGNAL: 'Interrupted by signal',
-        lib.SYSVMQ_E_SIZE: 'Data is too big',
+        ERROR: 'Error',
+        INVALID_VALUE: 'Invalid value',
+        NO_PERMISSIONS: 'No permissions',
+        NO_SYSTEM_RESOURCES: 'No system resources',
+        INVALID_DESCRIPTOR: 'Invalid queue descriptor',
+        INTERRUPTED: 'Interrupted by signal',
+        TOO_BIG_MESSAGE: 'Data is too big',
     }
 
     def __init__(self, errno, msg=None):

@@ -13,18 +13,34 @@ __all__ = ['QueueError', 'unlink', 'Queue']
 class QueueError(Exception):
     """
     Indicates Queue error. Contains additional attributes *errno* and *msg*.
+    Value of the *errno* is system dependent, do don't use numeric codes
+    directly, use constants **QueueError.ERROR**, **QueueError.INVALID_VALUE**,
+    **QueueError.NO_PERMISSIONS**, **QueueError.NO_SYSTEM_RESOURCES**,
+    **QueueError.INVALID_DESCRIPTOR**, **QueueError.INTERRUPTED**,
+    **QueueError.TOO_BIG_MESSAGE**, **QueueError.TIMEOUT** and
+    **QueueError.DOES_NOT_EXIST**.
     """
 
+    ERROR = lib.POSIXMQ_E
+    INVALID_VALUE = lib.POSIXMQ_E_VALUE
+    NO_PERMISSIONS = lib.POSIXMQ_E_PERMISSIONS
+    NO_SYSTEM_RESOURCES = lib.POSIXMQ_E_RESOURCES
+    INVALID_DESCRIPTOR = lib.POSIXMQ_E_DESCRIPTOR
+    INTERRUPTED = lib.POSIXMQ_E_SIGNAL
+    TOO_BIG_MESSAGE = lib.POSIXMQ_E_SIZE
+    TIMEOUT = lib.POSIXMQ_E_TIMEOUT
+    DOES_NOT_EXIST = lib.POSIXMQ_E_DOESNT_EXIST
+
     _errno_to_str_map = {
-        lib.POSIXMQ_E: 'Error',
-        lib.POSIXMQ_E_VALUE: 'Invalid value',
-        lib.POSIXMQ_E_PERMISSIONS: 'No permissions',
-        lib.POSIXMQ_E_RESOURCES: 'No system resources',
-        lib.POSIXMQ_E_DESCRIPTOR: 'Invalid queue descriptor',
-        lib.POSIXMQ_E_SIGNAL: 'Interrupted by signal',
-        lib.POSIXMQ_E_SIZE: 'Data is too big',
-        lib.POSIXMQ_E_TIMEOUT: 'Timeout',
-        lib.POSIXMQ_E_DOESNT_EXIST: 'Queue does not exist',
+        ERROR: 'Error',
+        INVALID_VALUE: 'Invalid value',
+        NO_PERMISSIONS: 'No permissions',
+        NO_SYSTEM_RESOURCES: 'No system resources',
+        INVALID_DESCRIPTOR: 'Invalid queue descriptor',
+        INTERRUPTED: 'Interrupted by signal',
+        TOO_BIG_MESSAGE: 'Data is too big',
+        TIMEOUT: 'Timeout',
+        DOES_NOT_EXIST: 'Queue does not exist',
     }
 
     def __init__(self, errno, msg=None):

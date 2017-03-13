@@ -4,7 +4,6 @@ import time
 
 import pytest
 
-from ipcqueue._posixmq import lib
 from ipcqueue.posixmq import Queue, QueueError
 
 
@@ -35,7 +34,7 @@ def test_create_fail_when_invalid_name(name):
         mq = Queue(name)
         mq.close()
         mq.unlink()
-    assert excinfo.value.errno == lib.POSIXMQ_E_VALUE
+    assert excinfo.value.errno == QueueError.INVALID_VALUE
 
 
 @pytest.mark.parametrize(
@@ -46,7 +45,7 @@ def test_create_fail_when_invalid_maxsize(maxsize):
         mq = Queue('/test_posixmq', maxsize=maxsize)
         mq.close()
         mq.unlink()
-    assert excinfo.value.errno == lib.POSIXMQ_E_VALUE
+    assert excinfo.value.errno == QueueError.INVALID_VALUE
 
 
 def test_close_fail_when_invalid_descriptor():
@@ -55,7 +54,7 @@ def test_close_fail_when_invalid_descriptor():
         mq.close()
         with pytest.raises(QueueError) as excinfo:
             mq.close()
-        assert excinfo.value.errno == lib.POSIXMQ_E_DESCRIPTOR
+        assert excinfo.value.errno == QueueError.INVALID_DESCRIPTOR
     finally:
         mq.unlink()
 
@@ -66,7 +65,7 @@ def test_unlink_fail_when_does_not_exist():
     mq.unlink()
     with pytest.raises(QueueError) as excinfo:
         mq.unlink()
-    assert excinfo.value.errno == lib.POSIXMQ_E_DOESNT_EXIST
+    assert excinfo.value.errno == QueueError.DOES_NOT_EXIST
 
 
 def test_put_get_nowait(mq):
@@ -122,7 +121,7 @@ def test_put_block_forever(mq_full, alarm_handler):
     with pytest.raises(QueueError) as excinfo:
         mq_full.put([6, 'test message'])
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == lib.POSIXMQ_E_SIGNAL
+    assert excinfo.value.errno == QueueError.INTERRUPTED
 
 
 def test_get_block_forever(mq, alarm_handler):
@@ -131,13 +130,13 @@ def test_get_block_forever(mq, alarm_handler):
     with pytest.raises(QueueError) as excinfo:
         mq.get()
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == lib.POSIXMQ_E_SIGNAL
+    assert excinfo.value.errno == QueueError.INTERRUPTED
 
 
 def test_put_fail_when_big_message(mq):
     with pytest.raises(QueueError) as excinfo:
         mq.put_nowait(['a' * 4096])
-    assert excinfo.value.errno == lib.POSIXMQ_E_SIZE
+    assert excinfo.value.errno == QueueError.TOO_BIG_MESSAGE
 
 
 def test_qattr_empty_queue(mq):
