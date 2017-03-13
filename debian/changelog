@@ -1,3 +1,11 @@
+python-ipcqueue (0.9.1) unstable; urgency=medium
+
+  * Decrease default maxmsgsize limit for POSIX queue to 1024
+  * Define error codes constants
+  * Improve documentation
+
+ -- Jan Seifert <jan.seifert@firma.seznam.cz>  Mon, 13 Mar 2017 21:34:40 +0100
+
 python-ipcqueue (0.9.0) unstable; urgency=medium
 
   * First release 0.9.0

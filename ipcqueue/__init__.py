@@ -17,4 +17,4 @@ with timeout is supported, but doesn't provide  message's type. See
 http://man7.org/linux/man-pages/man7/mq_overview.7.html.
 """
 
-__version__ = '0.9.0'
+__version__ = '0.9.1'
