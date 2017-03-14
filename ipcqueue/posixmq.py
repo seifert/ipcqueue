@@ -2,8 +2,14 @@
 Interprocess POSIX message queue implementation.
 """
 
-import pickle
-import queue
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+try:
+    import Queue as queue
+except ImportError:
+    import queue
 
 from ipcqueue._posixmq import ffi, lib
 
@@ -51,7 +57,7 @@ class QueueError(Exception):
                 msg = self._errno_to_str_map[-1]
         self.errno = errno
         self.msg = msg
-        super().__init__('{}, {}'.format(errno, msg))
+        super(QueueError, self).__init__('{}, {}'.format(errno, msg))
 
 
 def unlink(name):
@@ -196,7 +202,7 @@ class Queue(object):
     def qsize(self):
         """
         Return the approximate size of the queue. Note, ``qsize() > 0``
-        doesn’t guarantee that a subsequent :meth:`get` will not block,
+        doesn't guarantee that a subsequent :meth:`get` will not block,
         nor will ``qsize() < maxsize`` guarantee that :meth:`put` will
         not block.
         """

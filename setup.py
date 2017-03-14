@@ -42,9 +42,11 @@ setup(
     author_email="jan.seifert@fotkyzcest.net",
     description=description,
     long_description=long_description,
+    keywords = "sysv posix ipc queue",
     url='https://github.com/seifert/ipcqueue',
     license="BSD",
     classifiers=[
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',

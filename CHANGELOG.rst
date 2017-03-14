@@ -1,3 +1,8 @@
+0.9.2
+-----
+
+* Both Python 2 and Python 3 support
+
 0.9.1
 -----
 

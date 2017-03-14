@@ -1,5 +1,8 @@
 
-import queue
+try:
+    from Queue import Full, Empty
+except ImportError:
+    from queue import Full, Empty
 import time
 
 import pytest
@@ -64,12 +67,12 @@ def test_put_get_nowait_pickle_protocol(mq):
 
 
 def test_put_nowait_fail_when_full_queue(mq_full):
-    with pytest.raises(queue.Full):
+    with pytest.raises(Full):
         mq_full.put_nowait([6, 'a' * 384])
 
 
 def test_get_nowait_fail_when_empty_queue(mq):
-    with pytest.raises(queue.Empty):
+    with pytest.raises(Empty):
         mq.get_nowait()
 
 
