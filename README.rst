@@ -23,6 +23,8 @@ Requires Python CFFI, C compiler and Python header files.
 Usage
 -----
 
+::
+
     >>> from ipcqueue import posixmq
     >>> q = posixmq.Queue('/foo')
     >>> q.qsize()
