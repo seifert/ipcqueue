@@ -1,0 +1,8 @@
+include AUTHORS CHANGELOG.rst LICENSE README.rst
+include cffi_builder_posix.py cffi_builder_sysv.py
+include ipcqueue/*.h ipcqueue.c
+recursive-include debian *
+recursive-include doc *
+recursive-include tests *
+global-exclude *.pyc *.so
+prune doc/_build

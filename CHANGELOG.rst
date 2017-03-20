@@ -1,3 +1,8 @@
+0.9.4
+-----
+
+* Fix building cffi modules
+
 0.9.3
 -----
 
