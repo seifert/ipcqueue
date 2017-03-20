@@ -58,6 +58,9 @@ setup(
     ],
     packages=['ipcqueue'],
     zip_safe=False,
+    setup_requires=[
+        'cffi>=1',
+    ],
     install_requires=[
         'cffi>=1',
     ],
