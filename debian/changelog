@@ -2,7 +2,7 @@ python-ipcqueue (0.9.4) unstable; urgency=medium
 
   * Fix building cffi modules
 
- -- Jan Seifert <jan.seifert@firma.seznam.cz>  Mon, 20 Mar 2017 13:32:06 +0100
+ -- Jan Seifert <jan.seifert@firma.seznam.cz>  Wed, 19 Jul 2017 11:56:05 +0200
 
 python-ipcqueue (0.9.3) unstable; urgency=medium
 
