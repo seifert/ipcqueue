@@ -22,6 +22,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+
 description = (
     "Ipcqueue provides POSIX and SYS V message queues functionality to "
     "exchange data among processes."
@@ -42,7 +43,7 @@ setup(
     author_email="jan.seifert@fotkyzcest.net",
     description=description,
     long_description=long_description,
-    keywords = "sysv posix ipc queue",
+    keywords="sysv posix ipc queue",
     url='https://github.com/seifert/ipcqueue',
     license="BSD",
     classifiers=[
