@@ -1,3 +1,8 @@
+0.9.5
+-----
+
+* Fix maximum value of the tv_nsec in timeout_to_timespec function
+
 0.9.4
 -----
 

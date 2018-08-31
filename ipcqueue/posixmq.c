@@ -26,15 +26,15 @@ void inline timeout_to_timespec(const double timeout,
     abs_timeout->tv_sec = current_timeval.tv_sec + integral;
     abs_timeout->tv_nsec = (
             current_timeval.tv_usec + (fractional * 1000 * 1000)) * 1000;
-    if (abs_timeout->tv_nsec > 1000000000) {
-        abs_timeout->tv_sec += 1;
-        abs_timeout->tv_nsec -= 1000000000;
+    if (abs_timeout->tv_nsec > 999999999) {
+        long sec = abs_timeout->tv_nsec / 1000000000;
+        abs_timeout->tv_sec += sec;
+        abs_timeout->tv_nsec -= sec * 1000000000;
     }
 }
 
 PosixMqResult posixmq_open(const char * const name, int * const mq,
         const size_t maxmsgsize, const size_t maxsize) {
-
     struct mq_attr attrs = {.mq_maxmsg = maxsize, .mq_msgsize = maxmsgsize};
 
     mqd_t mqdes = mq_open(name, O_CREAT | O_RDWR, 0644, &attrs);

@@ -1,3 +1,9 @@
+python-ipcqueue (0.9.5) unstable; urgency=medium
+
+  * Fix maximum value of the tv_nsec in timeout_to_timespec function
+
+ -- Jan Seifert <jan.seifert@firma.seznam.cz>  Fri, 31 Aug 2018 13:03:15 +0200
+
 python-ipcqueue (0.9.4) unstable; urgency=medium
 
   * Fix building cffi modules
