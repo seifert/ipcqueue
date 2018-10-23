@@ -2,10 +2,8 @@
 Interprocess SYS V message queue implementation.
 """
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+from .serializers import PickleSerializer
+
 try:
     import Queue as queue
 except ImportError:
@@ -60,7 +58,7 @@ class Queue(object):
     SYS V message queue.
     """
 
-    def __init__(self, key=None, max_bytes=None):
+    def __init__(self, key=None, max_bytes=None, serializer=PickleSerializer):
         """
         Constructor for message queue. *key* is an unique identifier of
         the queue, must be positive number or ``0`` for private queue.
@@ -81,6 +79,7 @@ class Queue(object):
             if res != lib.SYSVMQ_OK:
                 raise QueueError(res)
         self._max_bytes = max_bytes
+        self._serializer = serializer
 
     def close(self):
         """
@@ -90,43 +89,41 @@ class Queue(object):
         if res != lib.SYSVMQ_OK:
             raise QueueError(res)
 
-    def put(self, item, block=True, msg_type=1, pickle_protocol=1):
+    def put(self, item, block=True, msg_type=1):
         """
         Put *item* into the queue. If *block* is ``True``, block if
         necessary until a free slot is available. Otherwise, put an *item*
         on the queue if a free slot is immediately available, else raise
         the :class:`queue.Full` exception. *msg_type* must be positive
         integer value, this value can be used by the receiving process
-        for message selection. *pickle_protocol* is a format used by
-        Python's :mod:`pickle`.
+        for message selection.
         """
         if block:
             timeout = float('inf')
         else:
             timeout = 0.0
-        data = pickle.dumps(item, pickle_protocol)
+        data = self._serializer.dumps(item)
         data_len = len(data)
 
         if data_len > self._max_bytes:
             raise QueueError(lib.SYSVMQ_E_SIZE)
 
         res = lib.sysvmq_put(
-            self._queue_id, data, data_len, msg_type, timeout)
+                self._queue_id, data, data_len, msg_type, timeout)
 
         if res == lib.SYSVMQ_E_FULL:
             raise queue.Full
         elif res != lib.SYSVMQ_OK:
             raise QueueError(res)
 
-    def put_nowait(self, item, msg_type=1, pickle_protocol=1):
+    def put_nowait(self, item, msg_type=1):
         """
         Put *item* into the queue, equivalent to ``put(item, block=False)``.
         *msg_type* must be positive integer value, this value can be used
         by the receiving process for message selection. *pickle_protocol*
         is a format used by Python's :mod:`pickle`.
         """
-        return self.put(item, block=False, msg_type=msg_type,
-                        pickle_protocol=pickle_protocol)
+        return self.put(item, block=False, msg_type=msg_type)
 
     def get(self, block=True, msg_type=0):
         """
@@ -144,10 +141,10 @@ class Queue(object):
             timeout = float('inf')
         else:
             timeout = 0.0
-        buffer = ffi.new('char[]', self._max_bytes)
+        buf = ffi.new('char[]', self._max_bytes)
         size = ffi.new('size_t *', self._max_bytes)
 
-        res = lib.sysvmq_get(self._queue_id, buffer, size, msg_type, timeout)
+        res = lib.sysvmq_get(self._queue_id, buf, size, msg_type, timeout)
 
         if res == lib.SYSVMQ_E_EMPTY:
             raise queue.Empty
@@ -156,7 +153,7 @@ class Queue(object):
 
         data_size = size[0]
         data = ffi.buffer(buffer[0:data_size])[:]
-        return pickle.loads(data)
+        return self._serializer.loads(data)
 
     def get_nowait(self, msg_type=0):
         """

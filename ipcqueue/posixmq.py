@@ -2,10 +2,8 @@
 Interprocess POSIX message queue implementation.
 """
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
+from .serializers import PickleSerializer
+
 try:
     import Queue as queue
 except ImportError:
@@ -75,7 +73,7 @@ class Queue(object):
     POSIX message queue.
     """
 
-    def __init__(self, name, maxsize=10, maxmsgsize=1024):
+    def __init__(self, name, maxsize=10, maxmsgsize=1024, serializer=PickleSerializer):
         """
         Constructor for message queue. *name* is an unique identifier of the
         queue, must starts with ``/``. *maxsize* is an integer that sets
@@ -93,6 +91,7 @@ class Queue(object):
         self._name = name
         self._maxsize = maxsize
         self._max_msg_size = maxmsgsize
+        self._serializer = serializer
 
     def close(self):
         """
@@ -110,8 +109,7 @@ class Queue(object):
         """
         unlink(self._name)
 
-    def put(self, item, block=True, timeout=None, priority=0,
-            pickle_protocol=1):
+    def put(self, item, block=True, timeout=None, priority=0):
         """
         Put *item* into the queue. If *block* is ``True`` and *timeout* is
         ``None`` (the default), block if necessary until a free slot is
@@ -121,33 +119,30 @@ class Queue(object):
         ``False``), put an *item* on the queue if a free slot is immediately
         available, else raise the :class:`queue.Full` exception (*timeout*
         is ignored in that case). *priority* is a priority of the message,
-        the highest valued items are retrieved first. Items is serialized by
-        Python's :mod:`pickle` module, *pickle_protocol* is a protocol's
-        version.
+        the highest valued items are retrieved first.
         """
         if not block:
             timeout = 0.0
         elif timeout is None:
             timeout = float('inf')
-        data = pickle.dumps(item, pickle_protocol)
+        data = self._serializer.dumps(item)
 
         res = lib.posixmq_put(
-            self._queue_id, data, len(data), priority, timeout)
+                self._queue_id, data, len(data), priority, timeout)
 
         if res == lib.POSIXMQ_E_TIMEOUT:
             raise queue.Full
         elif res != lib.POSIXMQ_OK:
             raise QueueError(res)
 
-    def put_nowait(self, item, priority=0, pickle_protocol=1):
+    def put_nowait(self, item, priority=0):
         """
         Put *item* into the queue, equivalent to ``put(item, block=False)``.
         *priority* is a priority of the message, the highest valued items
         are retrieved first. Items is serialized by Python's :mod:`pickle`
         module, *pickle_protocol* is a protocol's version.
         """
-        return self.put(item, block=False, priority=priority,
-                        pickle_protocol=pickle_protocol)
+        return self.put(item, block=False, priority=priority)
 
     def get(self, block=True, timeout=None):
         """
@@ -163,11 +158,11 @@ class Queue(object):
             timeout = 0.0
         elif timeout is None:
             timeout = float('inf')
-        buffer = ffi.new('char[]', self._max_msg_size)
+        buf = ffi.new('char[]', self._max_msg_size)
         size = ffi.new('size_t *', self._max_msg_size)
         priority = ffi.new('unsigned int *')
 
-        res = lib.posixmq_get(self._queue_id, buffer, size, priority, timeout)
+        res = lib.posixmq_get(self._queue_id, buf, size, priority, timeout)
 
         if res == lib.POSIXMQ_E_TIMEOUT:
             raise queue.Empty
@@ -176,7 +171,7 @@ class Queue(object):
 
         data_size = size[0]
         data = ffi.buffer(buffer[0:data_size])[:]
-        return pickle.loads(data)
+        return self._serializer.loads(data)
 
     def get_nowait(self):
         """
