@@ -152,7 +152,7 @@ class Queue(object):
             raise QueueError(res)
 
         data_size = size[0]
-        data = ffi.buffer(buffer[0:data_size])[:]
+        data = ffi.buffer(buf[0:data_size])[:]
         return self._serializer.loads(data)
 
     def get_nowait(self, msg_type=0):
