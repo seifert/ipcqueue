@@ -1,3 +1,8 @@
+0.9.6
+-----
+
+* Add support for arbitrary serializers
+
 0.9.5
 -----
 
