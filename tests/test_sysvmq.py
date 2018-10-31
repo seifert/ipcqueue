@@ -60,8 +60,8 @@ def test_put_get_nowait_msgtype(mq):
 
 
 def test_put_get_nowait_pickle_protocol(mq):
-    mq.put_nowait([123, 'test message'], pickle_protocol=0)
-    mq.put_nowait([456, 'test message'], pickle_protocol=1)
+    mq.put_nowait([123, 'test message'])
+    mq.put_nowait([456, 'test message'])
     assert mq.get_nowait() == [123, 'test message']
     assert mq.get_nowait() == [456, 'test message']
 
