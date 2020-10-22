@@ -8,11 +8,3 @@ build
 dist
 doc/_build
 .eggs
-*.debhelper
-*.substvars
-*.deb
-*.log
-.pybuild
-debian/files
-debian/python-ipcqueue/
-debian/python3-ipcqueue/

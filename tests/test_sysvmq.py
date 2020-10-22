@@ -1,4 +1,5 @@
 
+import errno
 try:
     from Queue import Full, Empty
 except ImportError:
@@ -7,68 +8,63 @@ import time
 
 import pytest
 
-from ipcqueue.sysvmq import Queue, QueueError
+from ipcqueue.serializers import RawSerializer
+from ipcqueue.sysvmq import Queue
 
 
 @pytest.fixture(scope='function')
 def mq():
-    mq = Queue(key=None, max_bytes=2048)
+    mq = Queue(key=None, max_bytes=2048, serializer=RawSerializer)
     yield mq
     mq.close()
 
 
 @pytest.fixture(scope='function')
 def mq_full(mq):
-    mq.put_nowait([1, 'a' * 384])
-    mq.put_nowait([2, 'a' * 384])
-    mq.put_nowait([3, 'a' * 384])
-    mq.put_nowait([4, 'a' * 384])
-    mq.put_nowait([5, 'a' * 384])
+    mq.put_nowait(b'a'*384)
+    mq.put_nowait(b'a'*384)
+    mq.put_nowait(b'a'*384)
+    mq.put_nowait(b'a'*384)
+    mq.put_nowait(b'a'*384)
     yield mq
 
 
 def test_create_fail_when_invalid_key():
-    with pytest.raises(OverflowError):
+    with pytest.raises(OSError) as excinfo:
         mq = Queue(-1)
         mq.close()
+    assert excinfo.value.errno == errno.EINVAL
 
 
 def test_close_fail_when_invalid_descriptor():
     mq = Queue(0)
     mq.close()
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq.close()
-    assert excinfo.value.errno == QueueError.INVALID_DESCRIPTOR
+    assert excinfo.value.errno == errno.EINVAL
 
 
 def test_put_get_nowait(mq):
-    mq.put_nowait([123, 'test message'])
-    mq.put_nowait([456, 'test message'])
-    mq.put_nowait([789, 'test message'])
-    assert mq.get_nowait() == [123, 'test message']
-    assert mq.get_nowait() == [456, 'test message']
-    assert mq.get_nowait() == [789, 'test message']
+    mq.put_nowait(b'test-message1')
+    mq.put_nowait(b'test-message2')
+    mq.put_nowait(b'test-message3')
+    assert mq.get_nowait() == b'test-message1'
+    assert mq.get_nowait() == b'test-message2'
+    assert mq.get_nowait() == b'test-message3'
 
 
 def test_put_get_nowait_msgtype(mq):
-    mq.put_nowait([123, 'test message'], msg_type=1)
-    mq.put_nowait([456, 'test message'], msg_type=2)
-    mq.put_nowait([789, 'test message'], msg_type=1)
-    assert mq.get_nowait(msg_type=2) == [456, 'test message']
-    assert mq.get_nowait(msg_type=0) == [123, 'test message']
-    assert mq.get_nowait(msg_type=1) == [789, 'test message']
-
-
-def test_put_get_nowait_pickle_protocol(mq):
-    mq.put_nowait([123, 'test message'])
-    mq.put_nowait([456, 'test message'])
-    assert mq.get_nowait() == [123, 'test message']
-    assert mq.get_nowait() == [456, 'test message']
+    mq.put_nowait(b'test message1', msg_type=1)
+    mq.put_nowait(b'test message2', msg_type=2)
+    mq.put_nowait(b'test message3', msg_type=1)
+    assert mq.get_nowait(msg_type=2) == b'test message2'
+    assert mq.get_nowait(msg_type=0) == b'test message1'
+    assert mq.get_nowait(msg_type=1) == b'test message3'
 
 
 def test_put_nowait_fail_when_full_queue(mq_full):
     with pytest.raises(Full):
-        mq_full.put_nowait([6, 'a' * 384])
+        mq_full.put_nowait(b'a'*384)
 
 
 def test_get_nowait_fail_when_empty_queue(mq):
@@ -79,25 +75,24 @@ def test_get_nowait_fail_when_empty_queue(mq):
 def test_put_block_forever(mq_full, alarm_handler):
     alarm_handler(1)
     start_time = time.time()
-    with pytest.raises(QueueError) as excinfo:
-        mq_full.put([6, 'a' * 384])
+    with pytest.raises(OSError) as excinfo:
+        mq_full.put(b'a'*384)
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == QueueError.INTERRUPTED
+    assert excinfo.value.errno == errno.EINTR
 
 
 def test_get_block_forever(mq, alarm_handler):
     alarm_handler(1)
     start_time = time.time()
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq.get()
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == QueueError.INTERRUPTED
+    assert excinfo.value.errno == errno.EINTR
 
 
 def test_put_fail_when_big_message(mq):
-    with pytest.raises(QueueError) as excinfo:
-        mq.put_nowait(['a' * (2048 + 1)])
-    assert excinfo.value.errno == QueueError.TOO_BIG_MESSAGE
+    with pytest.raises(Full):
+        mq.put_nowait(b'a'*(2049))
 
 
 def test_qattr_empty_queue(mq):

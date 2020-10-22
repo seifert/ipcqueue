@@ -1,26 +1,9 @@
 
 import sys
 
-from setuptools import setup
-from setuptools.command.test import test as TestCommand
+from distutils.core import setup, Extension
 
 import ipcqueue
-
-
-class PyTest(TestCommand):
-
-    user_options = [
-        ('pytest-args=', 'a', "Arguments to pass to py.test"),
-    ]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
-
-    def run_tests(self):
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
 
 
 description = (
@@ -48,9 +31,11 @@ setup(
     license="BSD",
     classifiers=[
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'License :: OSI Approved :: BSD License',
         'Operating System :: POSIX',
         'Development Status :: 4 - Beta',
@@ -58,22 +43,15 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     packages=['ipcqueue'],
-    zip_safe=False,
-    setup_requires=[
-        'cffi>=1',
-    ],
-    install_requires=[
-        'cffi>=1',
-    ],
-    tests_require=[
-        'pytest>=3',
-    ],
-    test_suite='tests',
-    cmdclass={
-        'test': PyTest,
-    },
-    cffi_modules=[
-        'cffi_builder_posix.py:ffibuilder',
-        'cffi_builder_sysv.py:ffibuilder',
+    ext_modules=[
+        Extension(
+            name='ipcqueue._posixmq',
+            sources=['ipcqueue/_posixmq.c'],
+            libraries=['rt'],
+        ),
+        Extension(
+            name='ipcqueue._sysvmq',
+            sources=['ipcqueue/_sysvmq.c'],
+        ),
     ],
 )

@@ -13,7 +13,7 @@ or receiving message.
 Installation
 ------------
 
-Requires Python CFFI, C compiler and Python header files.
+Requires C compiler and Python header files.
 
 ::
 

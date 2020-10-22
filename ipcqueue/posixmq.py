@@ -2,70 +2,29 @@
 Interprocess POSIX message queue implementation.
 """
 
-from .serializers import PickleSerializer
-
+import errno
+try:
+    from math import inf
+except ImportError:
+    inf = float('inf')
 try:
     import Queue as queue
 except ImportError:
     import queue
 
-from ipcqueue._posixmq import ffi, lib
+from ._posixmq import (
+    posixmq_open, posixmq_close, posixmq_unlink, posixmq_put,
+    posixmq_get, posixmq_get_attr)
+from .serializers import PickleSerializer
 
-__all__ = ['QueueError', 'unlink', 'Queue']
-
-
-class QueueError(Exception):
-    """
-    Indicates Queue error. Contains additional attributes *errno* and *msg*.
-    Value of the *errno* is system dependent, do don't use numeric codes
-    directly, use constants **QueueError.ERROR**, **QueueError.INVALID_VALUE**,
-    **QueueError.NO_PERMISSIONS**, **QueueError.NO_SYSTEM_RESOURCES**,
-    **QueueError.INVALID_DESCRIPTOR**, **QueueError.INTERRUPTED**,
-    **QueueError.TOO_BIG_MESSAGE**, **QueueError.TIMEOUT** and
-    **QueueError.DOES_NOT_EXIST**.
-    """
-
-    ERROR = lib.POSIXMQ_E
-    INVALID_VALUE = lib.POSIXMQ_E_VALUE
-    NO_PERMISSIONS = lib.POSIXMQ_E_PERMISSIONS
-    NO_SYSTEM_RESOURCES = lib.POSIXMQ_E_RESOURCES
-    INVALID_DESCRIPTOR = lib.POSIXMQ_E_DESCRIPTOR
-    INTERRUPTED = lib.POSIXMQ_E_SIGNAL
-    TOO_BIG_MESSAGE = lib.POSIXMQ_E_SIZE
-    TIMEOUT = lib.POSIXMQ_E_TIMEOUT
-    DOES_NOT_EXIST = lib.POSIXMQ_E_DOESNT_EXIST
-
-    _errno_to_str_map = {
-        ERROR: 'Error',
-        INVALID_VALUE: 'Invalid value',
-        NO_PERMISSIONS: 'No permissions',
-        NO_SYSTEM_RESOURCES: 'No system resources',
-        INVALID_DESCRIPTOR: 'Invalid queue descriptor',
-        INTERRUPTED: 'Interrupted by signal',
-        TOO_BIG_MESSAGE: 'Data is too big',
-        TIMEOUT: 'Timeout',
-        DOES_NOT_EXIST: 'Queue does not exist',
-    }
-
-    def __init__(self, errno, msg=None):
-        if not msg:
-            try:
-                msg = self._errno_to_str_map[errno]
-            except KeyError:
-                msg = self._errno_to_str_map[-1]
-        self.errno = errno
-        self.msg = msg
-        super(QueueError, self).__init__('{}, {}'.format(errno, msg))
+__all__ = ['unlink', 'Queue']
 
 
 def unlink(name):
     """
     Remove a message queue *name*.
     """
-    q_name = ffi.new('char[]', name.encode('utf-8'))
-    res = lib.posixmq_unlink(q_name)
-    if res != lib.POSIXMQ_OK:
-        raise QueueError(res)
+    posixmq_unlink(name)
 
 
 class Queue(object):
@@ -73,21 +32,18 @@ class Queue(object):
     POSIX message queue.
     """
 
-    def __init__(self, name, maxsize=10, maxmsgsize=1024, serializer=PickleSerializer):
+    def __init__(
+            self, name, maxsize=10, maxmsgsize=1024,
+            serializer=PickleSerializer):
         """
-        Constructor for message queue. *name* is an unique identifier of the
-        queue, must starts with ``/``. *maxsize* is an integer that sets
-        the upperbound limit on the number of items that can be placed in
-        the queue (maximum value depends on system limit). *maxmsgsize*
+        Constructor for message queue. *name* is an unique identifier of
+        the queue, must starts with ``/``. *maxsize* is an integer that
+        sets the upperbound limit on the number of items that can be placed
+        in the queue (maximum value depends on system limit). *maxmsgsize*
         is a maximum size of the message in bytes (maximum value depends
         on hard system limit).
         """
-        queue_name = ffi.new('char[]', name.encode('utf-8'))
-        queue_id = ffi.new('int *')
-        res = lib.posixmq_open(queue_name, queue_id, maxmsgsize, maxsize)
-        if res != lib.POSIXMQ_OK:
-            raise QueueError(res)
-        self._queue_id = queue_id[0]
+        self._queue_id = posixmq_open(name, maxmsgsize, maxsize)
         self._name = name
         self._maxsize = maxsize
         self._max_msg_size = maxmsgsize
@@ -97,9 +53,7 @@ class Queue(object):
         """
         Close a message queue.
         """
-        res = lib.posixmq_close(self._queue_id)
-        if res != lib.POSIXMQ_OK:
-            raise QueueError(res)
+        posixmq_close(self._queue_id)
 
     def unlink(self):
         """
@@ -124,16 +78,14 @@ class Queue(object):
         if not block:
             timeout = 0.0
         elif timeout is None:
-            timeout = float('inf')
+            timeout = inf
         data = self._serializer.dumps(item)
-
-        res = lib.posixmq_put(
-                self._queue_id, data, len(data), priority, timeout)
-
-        if res == lib.POSIXMQ_E_TIMEOUT:
-            raise queue.Full
-        elif res != lib.POSIXMQ_OK:
-            raise QueueError(res)
+        try:
+            posixmq_put(self._queue_id, data, priority, timeout)
+        except OSError as exc:
+            if exc.errno == errno.ETIMEDOUT:
+                raise queue.Full
+            raise
 
     def put_nowait(self, item, priority=0):
         """
@@ -157,20 +109,13 @@ class Queue(object):
         if not block:
             timeout = 0.0
         elif timeout is None:
-            timeout = float('inf')
-        buf = ffi.new('char[]', self._max_msg_size)
-        size = ffi.new('size_t *', self._max_msg_size)
-        priority = ffi.new('unsigned int *')
-
-        res = lib.posixmq_get(self._queue_id, buf, size, priority, timeout)
-
-        if res == lib.POSIXMQ_E_TIMEOUT:
-            raise queue.Empty
-        elif res != lib.POSIXMQ_OK:
-            raise QueueError(res)
-
-        data_size = size[0]
-        data = ffi.buffer(buf[0:data_size])[:]
+            timeout = inf
+        try:
+            data = posixmq_get(self._queue_id, timeout, self._max_msg_size)
+        except OSError as exc:
+            if exc.errno == errno.ETIMEDOUT:
+                raise queue.Empty
+            raise
         return self._serializer.loads(data)
 
     def get_nowait(self):
@@ -184,15 +129,7 @@ class Queue(object):
         Return attributes of the message queue as a :class:`dict`:
         ``{'size': 5, 'max_size': 10, 'max_msgbytes': 1024}``.
         """
-        attr = ffi.new('struct mq_attr *')
-        res = lib.posixmq_get_attr(self._queue_id, attr)
-        if res != lib.POSIXMQ_OK:
-            raise QueueError(res)
-        return {
-            'size': attr.mq_curmsgs,
-            'max_size': attr.mq_maxmsg,
-            'max_msgbytes': attr.mq_msgsize,
-        }
+        return  posixmq_get_attr(self._queue_id)
 
     def qsize(self):
         """
@@ -201,5 +138,4 @@ class Queue(object):
         nor will ``qsize() < maxsize`` guarantee that :meth:`put` will
         not block.
         """
-        attr = self.qattr()
-        return attr['size']
+        return self.qattr()['size']

@@ -1,3 +1,8 @@
+0.9.7
+-----
+
+* Use C Python API instead of CFFI
+
 0.9.6
 -----
 

@@ -1,4 +1,5 @@
 
+import errno
 try:
     from Queue import Full, Empty
 except ImportError:
@@ -7,7 +8,7 @@ import time
 
 import pytest
 
-from ipcqueue.posixmq import Queue, QueueError
+from ipcqueue.posixmq import Queue
 
 
 @pytest.fixture(scope='function')
@@ -29,35 +30,40 @@ def mq_full(mq):
 
 
 @pytest.mark.parametrize(
-    'name', ['', 'test_posixmq', '/' + 'a' * 256],
+    'name, expected_errno',
+    [
+        ('', errno.EINVAL),
+        ('test_posixmq', errno.EINVAL),
+        ('/' + 'a' * 256, errno.ENAMETOOLONG),
+    ],
     ids=['empty', 'no-initial-slash', 'too-long']
 )
-def test_create_fail_when_invalid_name(name):
-    with pytest.raises(QueueError) as excinfo:
+def test_create_fail_when_invalid_name(name, expected_errno):
+    with pytest.raises(OSError) as excinfo:
         mq = Queue(name)
         mq.close()
         mq.unlink()
-    assert excinfo.value.errno == QueueError.INVALID_VALUE
+    assert excinfo.value.errno == expected_errno
 
 
 @pytest.mark.parametrize(
     'maxsize', [0, (2 ** 31) - 1], ids=['zero', 'too-big']
 )
 def test_create_fail_when_invalid_maxsize(maxsize):
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq = Queue('/test_posixmq', maxsize=maxsize)
         mq.close()
         mq.unlink()
-    assert excinfo.value.errno == QueueError.INVALID_VALUE
+    assert excinfo.value.errno == errno.EINVAL
 
 
 def test_close_fail_when_invalid_descriptor():
     mq = Queue('/test_posixmq')
     try:
         mq.close()
-        with pytest.raises(QueueError) as excinfo:
+        with pytest.raises(OSError) as excinfo:
             mq.close()
-        assert excinfo.value.errno == QueueError.INVALID_DESCRIPTOR
+        assert excinfo.value.errno == errno.EBADF
     finally:
         mq.unlink()
 
@@ -66,9 +72,9 @@ def test_unlink_fail_when_does_not_exist():
     mq = Queue('/test_posixmq')
     mq.close()
     mq.unlink()
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq.unlink()
-    assert excinfo.value.errno == QueueError.DOES_NOT_EXIST
+    assert excinfo.value.errno == errno.ENOENT
 
 
 def test_put_get_nowait(mq):
@@ -121,25 +127,25 @@ def test_get_timeout(mq):
 def test_put_block_forever(mq_full, alarm_handler):
     alarm_handler(1)
     start_time = time.time()
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq_full.put([6, 'test message'])
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == QueueError.INTERRUPTED
+    assert excinfo.value.errno == errno.EINTR
 
 
 def test_get_block_forever(mq, alarm_handler):
     alarm_handler(1)
     start_time = time.time()
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq.get()
     assert time.time() - start_time > 1
-    assert excinfo.value.errno == QueueError.INTERRUPTED
+    assert excinfo.value.errno == errno.EINTR
 
 
 def test_put_fail_when_big_message(mq):
-    with pytest.raises(QueueError) as excinfo:
+    with pytest.raises(OSError) as excinfo:
         mq.put_nowait(['a' * 4096])
-    assert excinfo.value.errno == QueueError.TOO_BIG_MESSAGE
+    assert excinfo.value.errno == errno.EMSGSIZE
 
 
 def test_qattr_empty_queue(mq):
