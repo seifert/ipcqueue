@@ -1,7 +1,7 @@
 
 import sys
 
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 import ipcqueue
 
@@ -17,7 +17,7 @@ try:
     else:
         long_description = open('README.rst', 'r').read().decode('utf-8')
 except IOError:
-        long_description = description
+    long_description = description
 
 setup(
     name="ipcqueue",
