@@ -13,7 +13,7 @@ from ._sysvmq import (
     sysvmq_get_attr, sysvmq_set_max_bytes)
 from .serializers import PickleSerializer
 
-__all__ = ['QueueError', 'Queue']
+__all__ = ['Queue']
 
 
 class Queue(object):
@@ -106,7 +106,7 @@ class Queue(object):
         Return attributes of the message queue as a :class:`dict`:
         ``{'size': 3, 'max_bytes': 8192}``.
         """
-        return  sysvmq_get_attr(self._queue_id)
+        return sysvmq_get_attr(self._queue_id)
 
     def qsize(self):
         """

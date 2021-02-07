@@ -129,7 +129,7 @@ class Queue(object):
         Return attributes of the message queue as a :class:`dict`:
         ``{'size': 5, 'max_size': 10, 'max_msgbytes': 1024}``.
         """
-        return  posixmq_get_attr(self._queue_id)
+        return posixmq_get_attr(self._queue_id)
 
     def qsize(self):
         """
