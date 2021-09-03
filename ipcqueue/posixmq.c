@@ -14,7 +14,7 @@
 #include "posixmq.h"
 
 
-void inline timeout_to_timespec(const double timeout,
+static void inline timeout_to_timespec(const double timeout,
         struct timespec * const abs_timeout) {
 
     struct timeval current_timeval;
