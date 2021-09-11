@@ -1,7 +1,14 @@
+0.9.7
+-----
+
+* Declared timeout_to_timespec() static - fixes an 'undefined symbol'
+  error (Michael Haben <michael.haben@roke.co.uk)
+
 0.9.6
 -----
 
 * Add support for arbitrary serializers
+  (Roman Timofeev <cryptoloop@gmail.com>)
 
 0.9.5
 -----
