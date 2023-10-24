@@ -77,7 +77,8 @@ class Queue(object):
     def __init__(self, name, oflag=os.O_RDWR, maxsize=10, maxmsgsize=1024, serializer=PickleSerializer):
         """
         Constructor for message queue. *name* is an unique identifier of the
-        queue, must starts with ``/``. *maxsize* is an integer that sets
+        queue, must starts with ``/``. *oflag* should be the read/write mode,
+        defaults to `os.O_RDWR`. *maxsize* is an integer that sets
         the upperbound limit on the number of items that can be placed in
         the queue (maximum value depends on system limit). *maxmsgsize*
         is a maximum size of the message in bytes (maximum value depends
