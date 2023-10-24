@@ -17,7 +17,7 @@ typedef enum {
     POSIXMQ_E_DOESNT_EXIST
 } PosixMqResult;
 
-PosixMqResult posixmq_open(const char * const name, int * const mq,
+PosixMqResult posixmq_open(const char * const name, int oflag, int * const mq,
         const size_t maxmsgsize, const size_t maxsize);
 
 PosixMqResult posixmq_close(const int mq);

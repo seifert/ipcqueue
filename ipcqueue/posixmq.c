@@ -33,11 +33,11 @@ static void inline timeout_to_timespec(const double timeout,
     }
 }
 
-PosixMqResult posixmq_open(const char * const name, int * const mq,
+PosixMqResult posixmq_open(const char * const name, int oflag, int * const mq,
         const size_t maxmsgsize, const size_t maxsize) {
     struct mq_attr attrs = {.mq_maxmsg = maxsize, .mq_msgsize = maxmsgsize};
 
-    mqd_t mqdes = mq_open(name, O_CREAT | O_RDWR, 0644, &attrs);
+    mqd_t mqdes = mq_open(name, O_CREAT | oflag, 0644, &attrs);
 
     if (mqdes < 0) {
         switch (errno) {
