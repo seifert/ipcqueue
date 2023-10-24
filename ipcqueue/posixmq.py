@@ -1,6 +1,7 @@
 """
 Interprocess POSIX message queue implementation.
 """
+import os
 
 from .serializers import PickleSerializer
 
@@ -73,10 +74,11 @@ class Queue(object):
     POSIX message queue.
     """
 
-    def __init__(self, name, maxsize=10, maxmsgsize=1024, serializer=PickleSerializer):
+    def __init__(self, name, oflag=os.O_RDWR, maxsize=10, maxmsgsize=1024, serializer=PickleSerializer):
         """
         Constructor for message queue. *name* is an unique identifier of the
-        queue, must starts with ``/``. *maxsize* is an integer that sets
+        queue, must starts with ``/``. *oflag* should be the read/write mode,
+        defaults to `os.O_RDWR`. *maxsize* is an integer that sets
         the upperbound limit on the number of items that can be placed in
         the queue (maximum value depends on system limit). *maxmsgsize*
         is a maximum size of the message in bytes (maximum value depends
@@ -84,7 +86,8 @@ class Queue(object):
         """
         queue_name = ffi.new('char[]', name.encode('utf-8'))
         queue_id = ffi.new('int *')
-        res = lib.posixmq_open(queue_name, queue_id, maxmsgsize, maxsize)
+        #queue_oflag = ffi.new('int', oflag)
+        res = lib.posixmq_open(queue_name, oflag, queue_id, maxmsgsize, maxsize)
         if res != lib.POSIXMQ_OK:
             raise QueueError(res)
         self._queue_id = queue_id[0]
